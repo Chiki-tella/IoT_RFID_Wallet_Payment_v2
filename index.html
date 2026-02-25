@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RFID Wallet - Team its_ace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    }
+    .dark body {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+        <i class="fas fa-rfid mr-2"></i> RFID Wallet System – Team its_ace
+      </h1>
+      <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-moon text-xl"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Prominent Real-time Balance Display -->
+  <section class="max-w-4xl mx-auto px-6 py-8">
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-3xl shadow-2xl p-10 text-center transform transition-all hover:scale-[1.02]">
+      <h2 class="text-4xl font-bold mb-4">Current Card Balance</h2>
+      <p id="currentBalance" class="text-6xl font-extrabold mb-2">-- RWF</p>
+      <p id="currentUid" class="text-xl opacity-90 mb-4">Waiting for card scan...</p>
+      <p class="text-sm opacity-80">Last update: <span id="lastUpdate">--</span></p>
+    </div>
+  </section>
+
+  <!-- Main Content - Two Panels -->
+  <main class="max-w-6xl mx-auto px-6 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- Admin – Top Up -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-3xl font-bold mb-6 text-center text-indigo-600 dark:text-indigo-400">
+        <i class="fas fa-plus-circle mr-2"></i> Admin – Top Up
+      </h2>
+      <form id="topupForm" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Card UID</label>
+          <input type="text" id="uid" readonly placeholder="Scan card to auto-fill" class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Amount to Add (RWF)</label>
+          <input type="number" id="amount" min="100" step="100" placeholder="1000" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+          <i class="fas fa-arrow-up mr-2"></i> TOP UP NOW
+        </button>
+      </form>
+      <div id="feedback" class="mt-6 text-center hidden p-4 rounded-xl"></div>
+    </div>
+
+    <!-- Cashier – Payment -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-3xl font-bold mb-6 text-center text-red-600 dark:text-red-400">
+        <i class="fas fa-credit-card mr-2"></i> Cashier – Payment
+      </h2>
+      <form id="payForm" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Card UID</label>
+          <input id="payUid" type="text" readonly placeholder="Scan card to auto-fill" class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Product / Service</label>
+          <select id="product" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white">
+            <option value="Coffee">Coffee - 500 RWF</option>
+            <option value="Soda">Soda - 400 RWF</option>
+            <option value="Snack">Snack - 700 RWF</option>
+            <option value="Lunch">Lunch - 1500 RWF</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Quantity</label>
+          <input id="qty" type="number" value="1" min="1" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white" onchange="calcTotal()">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Total Cost</label>
+          <div id="totalCost" class="text-4xl font-bold text-red-600 dark:text-red-400">500 RWF</div>
+        </div>
+        <button type="button" onclick="makePayment()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+          <i class="fas fa-money-bill-wave mr-2"></i> PAY NOW
+        </button>
+      </form>
+      <div id="payFeedback" class="mt-6 text-center hidden p-4 rounded-xl"></div>
+    </div>
+
+  </main>
+
+  <!-- Live Updates Log (moved to bottom for better flow) -->
+  <section class="max-w-6xl mx-auto px-6 pb-12">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-200">
+        <i class="fas fa-stream mr-2"></i> Live Transaction Updates
+      </h2>
+      <div id="updates" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+        <p class="text-center text-gray-500 dark:text-gray-400 italic">Waiting for card scans or transactions...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-100 dark:bg-gray-900 py-6 text-center text-sm text-gray-600 dark:text-gray-400 border-t dark:border-gray-800">
+    RFID Wallet Transaction System • Team its_ace • 2026
+  </footer>
+
+  <script>
+  // === CONFIG - CHANGE THIS IF TESTING ON VPS ===
+  const BACKEND_URL = 'http://157.173.101.159:9111';   // ←←← PUT YOUR ACTUAL SERVER IP:PORT HERE (not localhost)
+  const WS_URL = BACKEND_URL.replace(/^http/, 'ws');
+
+  // Theme
+  const html = document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    html.classList.toggle('dark');
+    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+  });
+  if (localStorage.getItem('theme') === 'dark' || 
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    html.classList.add('dark');
+  }
+
+  // DOM
+  const updatesDiv = document.getElementById('updates');
+  const currentBalanceEl = document.getElementById('currentBalance');
+  const currentUidEl = document.getElementById('currentUid');
+  const lastUpdateEl = document.getElementById('lastUpdate');
+
+  // WebSocket
+  const ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    console.log('✅ WebSocket connected');
+    if (updatesDiv) updatesDiv.innerHTML = '<p class="text-green-600 dark:text-green-400 text-center font-medium">Connected ✓</p>';
+  };
+
+ ws.onmessage = (event) => {
+  console.log('Raw WS message received:', event.data);
+
+  try {
+    const msg = JSON.parse(event.data);
+
+    // Skip the welcome / connection message
+    if (msg.message && msg.message.includes('Connected')) {
+      console.log('Welcome message received - ignoring for display');
+      return;
+    }
+
+    const topic = msg.topic || '';
+    const topicPart = topic.split('/').pop() || '';
+    const data = msg.data || msg.payload || {};
+    const uid = data.uid || 'unknown';
+    let balance = data.balance;
+
+    console.log(`Topic part: ${topicPart} | uid: ${uid} | raw balance:`, balance);
+
+    // ────────────────────────────────────────────────────────────────
+    // OPTION 1: Completely ignore any balance value from /status topic
+    //           (ESP is sending unreliable/old value = 0 very often)
+    // ────────────────────────────────────────────────────────────────
+    if (topicPart === 'status') {
+      console.log('→ Ignoring balance field from status topic (unreliable from ESP)');
+
+      // Still use it for UID auto-fill and basic detection log
+      if (uid !== 'unknown') {
+        const payUidEl = document.getElementById('payUid');
+        const topupUidEl = document.getElementById('uid');
+        if (payUidEl) payUidEl.value = uid;
+        if (topupUidEl) topupUidEl.value = uid;
+
+        if (currentUidEl) currentUidEl.textContent = `UID: ${uid}`;
+        if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString();
+      }
+
+      // Add clean log entry without showing balance=0
+      if (updatesDiv) {
+        const entry = document.createElement('div');
+        entry.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 animate-fade-in';
+        entry.innerHTML = `<p class="font-medium">Card detected: <strong>${uid}</strong></p><p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${new Date().toLocaleTimeString()}</p>`;
+        updatesDiv.prepend(entry);
+        updatesDiv.scrollTop = 0;
+      }
+
+      return;  // ← STOP HERE - do NOT let status update the balance display
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Only trust balance from /balance topic (after real top-up/pay)
+    // ────────────────────────────────────────────────────────────────
+    if (topicPart === 'balance' && typeof balance === 'number' && !isNaN(balance)) {
+      console.log('→ Trusted balance update from /balance topic:', balance);
+
+      // Update the big visible balance card
+      if (currentBalanceEl) {
+        currentBalanceEl.textContent = `${balance.toLocaleString()} RWF`;
+      }
+      if (currentUidEl) {
+        currentUidEl.textContent = `UID: ${uid}`;
+      }
+      if (lastUpdateEl) {
+        lastUpdateEl.textContent = new Date().toLocaleTimeString();
+      }
+
+      // Add to live updates log
+      if (updatesDiv) {
+        const entry = document.createElement('div');
+        entry.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border-l-4 border-green-500 animate-fade-in';
+        entry.innerHTML = `<p class="font-medium">Balance updated → UID: <strong>${uid}</strong> | New Balance: <strong>${balance} RWF</strong></p><p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${new Date().toLocaleTimeString()}</p>`;
+        updatesDiv.prepend(entry);
+        updatesDiv.scrollTop = 0;
+      }
+    } else {
+      console.log('→ Ignored message (not trusted balance update)');
+    }
+
+  } catch (e) {
+    console.error('WS parse error:', e, 'Raw:', event.data);
+  }
+};
+
+  // Top-up form
+  document.getElementById('topupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const uid = document.getElementById('uid').value.trim().toUpperCase();
+    const amount = parseInt(document.getElementById('amount').value);
+
+    if (!uid || !amount || amount <= 0) return alert('Enter UID and amount');
+
+    const res = await fetch(`${BACKEND_URL}/topup`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ uid, amount })
+    });
+    const result = await res.json();
+
+    if (result.success && result.balance !== undefined) {
+      // FORCE UPDATE BALANCE IMMEDIATELY
+      if (currentBalanceEl) currentBalanceEl.textContent = `${result.balance.toLocaleString()} RWF`;
+      if (currentUidEl) currentUidEl.textContent = `UID: ${uid}`;
+      if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString();
+      
+      showFeedback(`✅ Top-up successful! New balance: ${result.balance} RWF`, 'success');
+    } else {
+      showFeedback(result.message || 'Failed', 'error');
+    }
+  });
+
+  // Payment
+  function makePayment() {
+    const uid = document.getElementById('payUid').value || document.getElementById('uid').value;
+    const amount = parseInt(document.getElementById('totalCost').textContent);
+    const product = document.getElementById('product').value;
+
+    if (!uid) return alert('Scan card first');
+
+    fetch(`${BACKEND_URL}/pay`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ uid, amount, product })
+    }).then(r => r.json()).then(result => {
+      if (result.success && result.balance !== undefined) {
+        if (currentBalanceEl) currentBalanceEl.textContent = `${result.balance.toLocaleString()} RWF`;
+        if (currentUidEl) currentUidEl.textContent = `UID: ${uid}`;
+        if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString();
+        
+        showPayFeedback(`✅ Payment successful! New balance: ${result.balance} RWF`, 'success');
+      } else {
+        showPayFeedback(result.message || 'Failed', 'error');
+      }
+    });
+  }
+
+  function showFeedback(text, type) {
+    const fb = document.getElementById('feedback');
+    fb.textContent = text;
+    fb.className = `p-4 rounded-xl text-center font-medium ${type === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`;
+    fb.classList.remove('hidden');
+    setTimeout(() => fb.classList.add('hidden'), 5000);
+  }
+
+  function showPayFeedback(text, type) {
+    const fb = document.getElementById('payFeedback');
+    fb.textContent = text;
+    fb.className = `p-4 rounded-xl text-center font-medium ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    fb.classList.remove('hidden');
+    setTimeout(() => fb.classList.add('hidden'), 5000);
+  }
+
+  function calcTotal() {
+    const price = parseInt(document.getElementById('product').selectedOptions[0].text.match(/\d+/)[0]);
+    const qty = parseInt(document.getElementById('qty').value) || 1;
+    document.getElementById('totalCost').textContent = (price * qty) + ' RWF';
+  }
+</script>
+</body>
+</html>

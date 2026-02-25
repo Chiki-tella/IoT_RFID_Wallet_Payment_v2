@@ -1,0 +1,18 @@
+{
+  "name": "iot_rfid_card_wallet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mqtt": "^5.15.0",
+    "sqlite3": "^5.1.7",
+    "ws": "^8.19.0"
+  }
+}
